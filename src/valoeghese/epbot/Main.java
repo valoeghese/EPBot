@@ -38,7 +38,7 @@ public class Main {
 			// Select Infinity TODO 
 			// document.findElement(By.xpath("//*[@id=\"number-of-questions-selector\"]/li[5]/div")).click();
 
-			
+
 			// load EP list
 			document.get("https://www.educationperfect.com/app/#/Latin/516/499901/list-starter");
 			wait.until(ExpectedConditions.visibilityOfElementLocated(FULL_LIST_SWITCH));
@@ -68,7 +68,7 @@ public class Main {
 
 			for (int j = 0; j < 200; ++j) {
 				try {
-					String value = document.findElement(TEXT).getAttribute("innerText");
+					String value = wait.until(ExpectedConditions.visibilityOfElementLocated(TEXT)).getAttribute("innerText");
 					input.sendKeys(languageData.get(value.toUpperCase(Locale.ROOT)));
 					input.sendKeys(Keys.ENTER);
 					Thread.sleep(20);
@@ -102,13 +102,12 @@ public class Main {
 
 	private static void appendData(Map<String, String> words, WebElement element) {
 		String targetLang = element.findElements(By.className("targetLanguage")).get(0).getAttribute("innerText").toUpperCase(Locale.ROOT);
-		String baseLang = element.findElements(By.className("baseLanguage")).get(0).getAttribute("innerText").toUpperCase(Locale.ROOT);
+		String baseLang = element.findElements(By.className("baseLanguage")).get(0).getAttribute("innerText").split(";")[0].toUpperCase(Locale.ROOT);
 		words.put(targetLang, baseLang);
 	}
 
 	private static final By LANG_ENTRY = By.className("preview-grid-item-content");
 	private static final By START_BUTTON = By.id("start-button-main");
-	private static final String SUBMIT_BUTTON = "submit-button";
 	private static final By FULL_LIST_SWITCH = By.xpath("//*[@id=\"full-list-switcher\"]");
 	private static final By TEXT = By.xpath("//*[@id=\"question-text\"]/span");
 	private static final By INPUT = By.xpath("/html/body/div[1]/div[2]/div/ui-view/div[1]/div[2]/div/div/div[2]/div[2]/game-lp-answer-input/div/div[2]/input");
