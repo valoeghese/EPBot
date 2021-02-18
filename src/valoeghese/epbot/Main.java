@@ -20,30 +20,30 @@ import tk.valoeghese.zoesteriaconfig.api.container.Container;
 
 public class Main {
 	public static void main(String[] args) throws InterruptedException {
-		WebDriver browser = new ChromeDriver();
+		WebDriver document = new ChromeDriver();
 
 		try {
 			// sign in
-			browser.get("https://www.educationperfect.com/app");
+			document.get("https://www.educationperfect.com/app");
 			Thread.sleep(1000);
 			Container loginInfo = ZoesteriaConfig.loadConfig(new File("login.zfg"));
-			browser.findElement(By.xpath("//*[@id=\"login-username\"]")).sendKeys(loginInfo.getStringValue("username"));
-			browser.findElement(By.xpath("//*[@id=\"login-password\"]")).sendKeys(loginInfo.getStringValue("password"));
-			browser.findElement(By.xpath("//*[@id=\"login-submit-button\"]")).click();
+			document.findElement(By.xpath("//*[@id=\"login-username\"]")).sendKeys(loginInfo.getStringValue("username"));
+			document.findElement(By.xpath("//*[@id=\"login-password\"]")).sendKeys(loginInfo.getStringValue("password"));
+			document.findElement(By.xpath("//*[@id=\"login-submit-button\"]")).click();
 			Thread.sleep(5000);
 
 			// load EP list
-			browser.get("https://www.educationperfect.com/app/#/Latin/516/499901/list-starter");
-			WebDriverWait wait = new WebDriverWait(browser, 30);
+			document.get("https://www.educationperfect.com/app/#/Latin/516/499901/list-starter");
+			WebDriverWait wait = new WebDriverWait(document, 30);
 			wait.until(ExpectedConditions.visibilityOfElementLocated(FULL_LIST_SWITCH));
 
-			browser.findElement(FULL_LIST_SWITCH).click();
-			wait = new WebDriverWait(browser, 30);
+			document.findElement(FULL_LIST_SWITCH).click();
+			wait = new WebDriverWait(document, 30);
 			wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"34632\"]")));
 			Thread.sleep(10000);
 
 			// Find Lang Entries
-			Map<String, String> languageData = new HashMap<>();
+			/*Map<String, String> languageData = new HashMap<>();
 
 			int i = 0;
 			for (WebElement element : loadPage(browser)) {
@@ -53,16 +53,14 @@ public class Main {
 				}
 			}
 
-			//		System.out.println(languageData);
-			System.out.println(languageData.get("ABERAT"));
-			System.out.println(languageData.get("ACER"));
-			System.out.println(languageData.get("VOLO"));
+			System.out.println("Finished loading words.");*/
+			document.findElement(START_BUTTON);
 
 			Thread.sleep(1000 * 10);
 		} catch (Throwable t) {
 			t.printStackTrace(System.err);
 		} finally {
-			browser.quit();
+			document.quit();
 		}
 	}
 
@@ -77,7 +75,7 @@ public class Main {
 			elements = browser.findElements(LANG_ENTRY);
 		}
 
-		System.out.println("Found " + elements.size() + " elements.");
+		System.out.println("Found " + elements.size() + " words.");
 		return elements;
 	}
 
@@ -88,7 +86,7 @@ public class Main {
 	}
 
 	private static final By LANG_ENTRY = By.className("preview-grid-item-content");
-	private static final String START_BUTTON = "start-button-main";
+	private static final By START_BUTTON = By.id("start-button-main");
 	private static final String SUBMIT_BUTTON = "submit-button";
 	private static final By FULL_LIST_SWITCH = By.xpath("//*[@id=\"full-list-switcher\"]");
 
