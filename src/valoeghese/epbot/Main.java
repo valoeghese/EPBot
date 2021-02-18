@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -34,34 +35,48 @@ public class Main {
 			wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("score-value")));
 			Thread.sleep(500);
 
+			// Select Infinity TODO 
+			// document.findElement(By.xpath("//*[@id=\"number-of-questions-selector\"]/li[5]/div")).click();
+
 			// load EP list
 			document.get("https://www.educationperfect.com/app/#/Latin/516/499901/list-starter");
 			wait.until(ExpectedConditions.visibilityOfElementLocated(FULL_LIST_SWITCH));
 
 			document.findElement(FULL_LIST_SWITCH).click();
 			wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"34632\"]")));
-			Thread.sleep(10000);
+			// wait for sh1t to load
+			Thread.sleep(4000);
 
 			// Find Lang Entries
-			/*Map<String, String> languageData = new HashMap<>();
+			Map<String, String> languageData = new HashMap<>();
 
 			int i = 0;
-			for (WebElement element : loadPage(browser)) {
+			for (WebElement element : loadPage(document)) {
 				appendData(languageData, element);
 				if (++i % 100 == 0) {
 					System.out.println("Loaded " + i + " words.");
 				}
 			}
 
-			System.out.println("Finished loading words.");*/
+			System.out.println("Finished loading words.");
 			document.findElement(START_BUTTON).click();
-			
-			//for (int i = 0; i < 100; ++i) {
-				String value = wait.until(ExpectedConditions.visibilityOfElementLocated(TEXT)).getAttribute("innerText");
-				document.findElement(INPUT).sendKeys(value);
-			//}
 
-			
+			WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(INPUT));
+			Thread.sleep(100);
+
+			WebElement valueElement = document.findElement(TEXT);
+
+			for (int j = 0; j < 200; ++j) {
+				try {
+					String value = valueElement.getAttribute("innerText");
+					input.sendKeys(languageData.get(value.toUpperCase(Locale.ROOT)));
+					input.sendKeys(Keys.ENTER);
+					Thread.sleep(20);
+				} catch (Exception e) {
+					e.printStackTrace(System.err);
+				}
+			}
+
 			Thread.sleep(1000 * 10);
 		} catch (Throwable t) {
 			t.printStackTrace(System.err);
@@ -96,7 +111,7 @@ public class Main {
 	private static final String SUBMIT_BUTTON = "submit-button";
 	private static final By FULL_LIST_SWITCH = By.xpath("//*[@id=\"full-list-switcher\"]");
 	private static final By TEXT = By.xpath("//*[@id=\"question-text\"]/span");
-	private static final By INPUT = By.xpath("//*[@id=\"answer-text\"]");
+	private static final By INPUT = By.xpath("/html/body/div[1]/div[2]/div/ui-view/div[1]/div[2]/div/div/div[2]/div[2]/game-lp-answer-input/div/div[2]/input");
 
 	//private static final By SCROLLBAR = By.xpath("//*[@id=\"preview-grid-container\"]/div[2]");
 }
