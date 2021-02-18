@@ -36,11 +36,9 @@ public class Main {
 
 			// load EP list
 			document.get("https://www.educationperfect.com/app/#/Latin/516/499901/list-starter");
-			wait = new WebDriverWait(document, 30);
 			wait.until(ExpectedConditions.visibilityOfElementLocated(FULL_LIST_SWITCH));
 
 			document.findElement(FULL_LIST_SWITCH).click();
-			wait = new WebDriverWait(document, 30);
 			wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"34632\"]")));
 			Thread.sleep(10000);
 
@@ -57,7 +55,13 @@ public class Main {
 
 			System.out.println("Finished loading words.");*/
 			document.findElement(START_BUTTON).click();
+			
+			//for (int i = 0; i < 100; ++i) {
+				String value = wait.until(ExpectedConditions.visibilityOfElementLocated(TEXT)).getAttribute("innerText");
+				document.findElement(INPUT).sendKeys(value);
+			//}
 
+			
 			Thread.sleep(1000 * 10);
 		} catch (Throwable t) {
 			t.printStackTrace(System.err);
@@ -91,6 +95,8 @@ public class Main {
 	private static final By START_BUTTON = By.id("start-button-main");
 	private static final String SUBMIT_BUTTON = "submit-button";
 	private static final By FULL_LIST_SWITCH = By.xpath("//*[@id=\"full-list-switcher\"]");
+	private static final By TEXT = By.xpath("//*[@id=\"question-text\"]/span");
+	private static final By INPUT = By.xpath("//*[@id=\"answer-text\"]");
 
 	//private static final By SCROLLBAR = By.xpath("//*[@id=\"preview-grid-container\"]/div[2]");
 }
