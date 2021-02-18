@@ -38,12 +38,14 @@ public class Main {
 			// Select Infinity TODO 
 			// document.findElement(By.xpath("//*[@id=\"number-of-questions-selector\"]/li[5]/div")).click();
 
+			
 			// load EP list
 			document.get("https://www.educationperfect.com/app/#/Latin/516/499901/list-starter");
 			wait.until(ExpectedConditions.visibilityOfElementLocated(FULL_LIST_SWITCH));
 
 			document.findElement(FULL_LIST_SWITCH).click();
 			wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"34632\"]")));
+
 			// wait for sh1t to load
 			Thread.sleep(4000);
 
@@ -64,11 +66,9 @@ public class Main {
 			WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(INPUT));
 			Thread.sleep(100);
 
-			WebElement valueElement = document.findElement(TEXT);
-
 			for (int j = 0; j < 200; ++j) {
 				try {
-					String value = valueElement.getAttribute("innerText");
+					String value = document.findElement(TEXT).getAttribute("innerText");
 					input.sendKeys(languageData.get(value.toUpperCase(Locale.ROOT)));
 					input.sendKeys(Keys.ENTER);
 					Thread.sleep(20);
