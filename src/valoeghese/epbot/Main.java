@@ -54,7 +54,7 @@ public class Main {
 			}
 
 			System.out.println("Finished loading words.");*/
-			document.findElement(START_BUTTON);
+			document.findElement(START_BUTTON).click();
 
 			Thread.sleep(1000 * 10);
 		} catch (Throwable t) {
