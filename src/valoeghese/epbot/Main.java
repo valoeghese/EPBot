@@ -30,11 +30,13 @@ public class Main {
 			document.findElement(By.xpath("//*[@id=\"login-username\"]")).sendKeys(loginInfo.getStringValue("username"));
 			document.findElement(By.xpath("//*[@id=\"login-password\"]")).sendKeys(loginInfo.getStringValue("password"));
 			document.findElement(By.xpath("//*[@id=\"login-submit-button\"]")).click();
-			Thread.sleep(5000);
+			WebDriverWait wait = new WebDriverWait(document, 30);
+			wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("score-value")));
+			Thread.sleep(500);
 
 			// load EP list
 			document.get("https://www.educationperfect.com/app/#/Latin/516/499901/list-starter");
-			WebDriverWait wait = new WebDriverWait(document, 30);
+			wait = new WebDriverWait(document, 30);
 			wait.until(ExpectedConditions.visibilityOfElementLocated(FULL_LIST_SWITCH));
 
 			document.findElement(FULL_LIST_SWITCH).click();
