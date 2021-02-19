@@ -31,18 +31,21 @@ import tk.valoeghese.zoesteriaconfig.impl.parser.ImplZoesteriaDefaultDeserialise
 
 public class Main {
 	public static void main(String[] args) throws InterruptedException, IOException {
+		// Load data
 		System.out.println("Starting data load");
 		long time = System.currentTimeMillis();
 		URL url = new URL("https://raw.githubusercontent.com/valoeghese/valoeghese.github.io/compass/programdata/latin_all.zfg");
 		EditableContainer languageData = new StringZFGParser<>(readString(url::openStream), new ImplZoesteriaDefaultDeserialiser(true)).asWritableConfig();
 		System.out.println("finished loading data in " + (System.currentTimeMillis() - time) + "ms.");
 
+		// Create Driver for chrome. Requires Chrome Driver to be installed.
 		WebDriver document = new ChromeDriver();
 
 		try {
 			// sign in
 			document.get("https://www.educationperfect.com/app");
 			Thread.sleep(1000);
+			// load the login information.
 			Container loginInfo = ZoesteriaConfig.loadConfig(new File("login.zfg"));
 			document.findElement(By.xpath("//*[@id=\"login-username\"]")).sendKeys(loginInfo.getStringValue("username"));
 			document.findElement(By.xpath("//*[@id=\"login-password\"]")).sendKeys(loginInfo.getStringValue("password"));
@@ -68,6 +71,7 @@ public class Main {
 
 			document.findElement(START_BUTTON).click();
 
+			// wait for the page to load, then get input
 			WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(INPUT));
 			Thread.sleep(100);
 
