@@ -1,12 +1,17 @@
 package valoeghese.epbot;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Function;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -20,9 +25,18 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 import tk.valoeghese.zoesteriaconfig.api.ZoesteriaConfig;
 import tk.valoeghese.zoesteriaconfig.api.container.Container;
+import tk.valoeghese.zoesteriaconfig.api.container.EditableContainer;
+import tk.valoeghese.zoesteriaconfig.api.container.WritableConfig;
+import tk.valoeghese.zoesteriaconfig.impl.parser.ImplZoesteriaDefaultDeserialiser;
 
 public class Main {
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) throws InterruptedException, IOException {
+		System.out.println("Starting data load");
+		long time = System.currentTimeMillis();
+		URL url = new URL("https://raw.githubusercontent.com/valoeghese/valoeghese.github.io/compass/programdata/latin_all.zfg");
+		EditableContainer languageData = new StringZFGParser<>(readString(url::openStream), new ImplZoesteriaDefaultDeserialiser(true)).asWritableConfig();
+		System.out.println("finished loading data in " + (System.currentTimeMillis() - time) + "ms.");
+
 		WebDriver document = new ChromeDriver();
 
 		try {
@@ -37,44 +51,24 @@ public class Main {
 			wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("score-value")));
 			Thread.sleep(500);
 
-			// Select Infinity TODO 
-			// document.findElement(By.xpath("//*[@id=\"number-of-questions-selector\"]/li[5]/div")).click();
-
-
 			// load EP list
 			document.get("https://www.educationperfect.com/app/#/Latin/516/499901/list-starter");
 			wait.until(ExpectedConditions.visibilityOfElementLocated(FULL_LIST_SWITCH));
 
 			document.findElement(FULL_LIST_SWITCH).click();
-			wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"34632\"]")));
+			wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"34632\"]"))); // wait for the page to load almost fully. Might not be neccesary.
 
-			// wait for sh1t to load
-			Thread.sleep(4000);
+			// select infinite questions
+			WebElement infinity = document.findElement(By.xpath("//*[@id=\"number-of-questions-selector\"]/li[5]/div"));
+			((JavascriptExecutor) document).executeScript("arguments[0].scrollIntoView();", infinity);
+			infinity.click();
 
-			// Find Lang Entries
-			///*
-			Map<Character, Map<String, WebElement>> preLanguageData = new HashMap<>();
-
-			int i = 0;
-			for (WebElement element : loadPage(document)) {
-				appendData(preLanguageData, element);
-				if (++i % 100 == 0) {
-					System.out.println("Loaded " + i + " words.");
-				}
-			}
-
-			System.out.println("Finished loading words.");
-
-			Map<Character, Map<String, String>> languageData = new HashMap<>();
-			languageData.computeIfAbsent('a', n -> new HashMap<>()).put("audit", "hears");//*/
+			// createDataFile(document, "latin_all");
 
 			document.findElement(START_BUTTON).click();
 
 			WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(INPUT));
 			Thread.sleep(100);
-
-			// computation from key-element to key-value
-			Function<String, String> langValGetter = val -> preLanguageData.get(val.charAt(0)).get(val).findElements(By.className("baseLanguage")).get(0).getAttribute("innerText").split(";")[0].toLowerCase(Locale.ROOT);
 
 			while (true) {
 				String prevVal = null;
@@ -92,7 +86,7 @@ public class Main {
 					boolean flag = false;
 
 					value = value.split(",")[0].toLowerCase(Locale.ROOT);
-					String output = languageData.computeIfAbsent(value.charAt(0), n -> new HashMap<>()).computeIfAbsent(value, langValGetter);
+					String output = (String) languageData.getMap(String.valueOf(value.charAt(0))).get(value);
 
 					if (output.isEmpty()) {
 						output = "?";
@@ -119,6 +113,33 @@ public class Main {
 		}
 	}
 
+	private static void createDataFile(WebDriver document, String fileName) throws InterruptedException {
+		// wait for sh1t to load
+		Thread.sleep(4000);
+
+		// Find Lang Entries
+		Map<Character, Map<String, Object>> languageData = new HashMap<>();
+
+		int i = 0;
+		for (WebElement element : loadPage(document)) {
+			appendData(languageData, element);
+			if (++i % 100 == 0) {
+				System.out.println("Loaded " + i + " words.");
+			}
+		}
+
+		System.out.println("Finished loading words.");
+		languageData.computeIfAbsent('a', n -> new HashMap<>()).put("audit", "hears");
+
+		WritableConfig output = ZoesteriaConfig.createWritableConfig(new LinkedHashMap<>());
+
+		languageData.forEach((c, map) -> {
+			output.putMap(Character.toString(c), map);
+		});
+
+		output.writeToFile(new File("./" + fileName + ".zfg"));
+	}
+
 	private static Collection<WebElement> loadPage(WebDriver browser) throws InterruptedException {
 		int searchIndex = 0;
 		List<WebElement> elements = browser.findElements(LANG_ENTRY);
@@ -134,9 +155,25 @@ public class Main {
 		return elements;
 	}
 
-	private static void appendData(Map<Character, Map<String, WebElement>> words, WebElement element) {
+	private static void appendData(Map<Character, Map<String, Object>> words, WebElement element) {
 		String targetLang = element.findElements(By.className("targetLanguage")).get(0).getAttribute("innerText").split(";")[0].toLowerCase(Locale.ROOT);
-		words.computeIfAbsent(targetLang.charAt(0), n -> new HashMap<>()).put(targetLang, element);
+		String baseLang = element.findElements(By.className("baseLanguage")).get(0).getAttribute("innerText").split(";")[0].toLowerCase(Locale.ROOT);
+		words.computeIfAbsent(targetLang.charAt(0), n -> new HashMap<>()).put(targetLang, baseLang);
+	}
+
+	private static String readString(FallableIOSupplier<InputStream> isSupplier) throws IOException {
+		InputStream is = isSupplier.get();
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+		int nBytesRead;
+		byte[] bufferBuffer = new byte[0x4000];
+
+		while ((nBytesRead = is.read(bufferBuffer, 0, bufferBuffer.length)) != -1) {
+			buffer.write(bufferBuffer, 0, nBytesRead);
+		}
+
+		is.close();
+		return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
 	}
 
 	private static final By LANG_ENTRY = By.className("preview-grid-item-content");
@@ -147,4 +184,8 @@ public class Main {
 	private static final By SKIP = By.xpath("/html/body/div[1]/div[2]/div[1]/div/div/div[2]/button");
 
 	//private static final By SCROLLBAR = By.xpath("//*[@id=\"preview-grid-container\"]/div[2]");
+}
+
+interface FallableIOSupplier<T> {
+	T get() throws IOException;
 }
