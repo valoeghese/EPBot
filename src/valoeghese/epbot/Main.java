@@ -119,8 +119,6 @@ public class Main {
 						if (flag) {
 							wait.until(ExpectedConditions.visibilityOfElementLocated(SKIP)).click();
 						}
-
-						Thread.sleep(50);
 					} catch (Exception e) {
 						e.printStackTrace(System.err);
 					}
