@@ -64,6 +64,7 @@ public class Main {
 			infinity.click();
 
 			// createDataFile(document, "latin_all");
+			// System.exit(0);
 
 			document.findElement(START_BUTTON).click();
 
@@ -86,9 +87,10 @@ public class Main {
 					boolean flag = false;
 
 					value = value.split(",")[0].toLowerCase(Locale.ROOT);
+					value = value.replace(' ', '_'); // ZoesteriaConfig doesn't support spaces in keys, so I replaced them with underscores
 					String output = (String) languageData.getMap(String.valueOf(value.charAt(0))).get(value);
 
-					if (output.isEmpty()) {
+					if (output == null || output.isEmpty()) {
 						output = "?";
 						flag = true;
 					}
@@ -158,7 +160,7 @@ public class Main {
 	private static void appendData(Map<Character, Map<String, Object>> words, WebElement element) {
 		String targetLang = element.findElements(By.className("targetLanguage")).get(0).getAttribute("innerText").split(";")[0].toLowerCase(Locale.ROOT);
 		String baseLang = element.findElements(By.className("baseLanguage")).get(0).getAttribute("innerText").split(";")[0].toLowerCase(Locale.ROOT);
-		words.computeIfAbsent(targetLang.charAt(0), n -> new HashMap<>()).put(targetLang, baseLang);
+		words.computeIfAbsent(targetLang.charAt(0), n -> new HashMap<>()).put(targetLang.replace(' ', '_'), baseLang); // ZoesteriaConfig doesn't support space in keys
 	}
 
 	private static String readString(FallableIOSupplier<InputStream> isSupplier) throws IOException {
