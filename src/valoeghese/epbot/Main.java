@@ -6,10 +6,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -50,34 +52,66 @@ public class Main {
 			Thread.sleep(4000);
 
 			// Find Lang Entries
-			Map<String, String> languageData = new HashMap<>();
+			///*
+			Map<Character, Map<String, WebElement>> preLanguageData = new HashMap<>();
 
 			int i = 0;
 			for (WebElement element : loadPage(document)) {
-				appendData(languageData, element);
+				appendData(preLanguageData, element);
 				if (++i % 100 == 0) {
 					System.out.println("Loaded " + i + " words.");
 				}
 			}
 
 			System.out.println("Finished loading words.");
+
+			Map<Character, Map<String, String>> languageData = new HashMap<>();
+			languageData.computeIfAbsent('a', n -> new HashMap<>()).put("audit", "hears");//*/
+
 			document.findElement(START_BUTTON).click();
 
 			WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(INPUT));
 			Thread.sleep(100);
 
-			for (int j = 0; j < 200; ++j) {
+			// computation from key-element to key-value
+			Function<String, String> langValGetter = val -> preLanguageData.get(val.charAt(0)).get(val).findElements(By.className("baseLanguage")).get(0).getAttribute("innerText").split(";")[0].toLowerCase(Locale.ROOT);
+
+			while (true) {
+				String prevVal = null;
 				try {
-					String value = wait.until(ExpectedConditions.visibilityOfElementLocated(TEXT)).getAttribute("innerText");
-					input.sendKeys(languageData.get(value.toUpperCase(Locale.ROOT)));
+					String value = null;
+
+					do {
+						try {
+							value = document.findElement(TEXT).getAttribute("innerText");
+						} catch (NoSuchElementException e) {
+							// ignore
+						}
+					} while (value == null || value.equals(prevVal));
+
+					boolean flag = false;
+
+					value = value.split(",")[0].toLowerCase(Locale.ROOT);
+					String output = languageData.computeIfAbsent(value.charAt(0), n -> new HashMap<>()).computeIfAbsent(value, langValGetter);
+
+					if (output.isEmpty()) {
+						output = "?";
+						flag = true;
+					}
+
+					input.sendKeys(output);
 					input.sendKeys(Keys.ENTER);
-					Thread.sleep(20);
+					prevVal = value;
+
+					if (flag) {
+						wait.until(ExpectedConditions.visibilityOfElementLocated(SKIP)).click();
+					}
+
+					Thread.sleep(50);
 				} catch (Exception e) {
 					e.printStackTrace(System.err);
 				}
 			}
-
-			Thread.sleep(1000 * 10);
 		} catch (Throwable t) {
 			t.printStackTrace(System.err);
 		} finally {
@@ -100,10 +134,9 @@ public class Main {
 		return elements;
 	}
 
-	private static void appendData(Map<String, String> words, WebElement element) {
-		String targetLang = element.findElements(By.className("targetLanguage")).get(0).getAttribute("innerText").toUpperCase(Locale.ROOT);
-		String baseLang = element.findElements(By.className("baseLanguage")).get(0).getAttribute("innerText").split(";")[0].toUpperCase(Locale.ROOT);
-		words.put(targetLang, baseLang);
+	private static void appendData(Map<Character, Map<String, WebElement>> words, WebElement element) {
+		String targetLang = element.findElements(By.className("targetLanguage")).get(0).getAttribute("innerText").split(";")[0].toLowerCase(Locale.ROOT);
+		words.computeIfAbsent(targetLang.charAt(0), n -> new HashMap<>()).put(targetLang, element);
 	}
 
 	private static final By LANG_ENTRY = By.className("preview-grid-item-content");
@@ -111,6 +144,7 @@ public class Main {
 	private static final By FULL_LIST_SWITCH = By.xpath("//*[@id=\"full-list-switcher\"]");
 	private static final By TEXT = By.xpath("//*[@id=\"question-text\"]/span");
 	private static final By INPUT = By.xpath("/html/body/div[1]/div[2]/div/ui-view/div[1]/div[2]/div/div/div[2]/div[2]/game-lp-answer-input/div/div[2]/input");
+	private static final By SKIP = By.xpath("/html/body/div[1]/div[2]/div[1]/div/div/div[2]/button");
 
 	//private static final By SCROLLBAR = By.xpath("//*[@id=\"preview-grid-container\"]/div[2]");
 }
